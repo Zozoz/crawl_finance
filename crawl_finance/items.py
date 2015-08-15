@@ -3,26 +3,35 @@
 import scrapy
 
 
-class CrawlFinanceItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class WangyiDirectory(scrapy.Item):
+    flag = scrapy.Field()
+    tid = scrapy.Field()
+    cid = scrapy.Field()
+    tname = scrapy.Field()
+    ename = scrapy.Field()
+    alias = scrapy.Field()
+    subnum = scrapy.Field()
+    topicid = scrapy.Field()
 
 
-class WangyiItem(scrapy.Item):
+class WangyiArticle(scrapy.Item):
     flag = scrapy.Field()
     url = scrapy.Field()
+    url_3w = scrapy.Field()
     docid = scrapy.Field()
-    parent = scrapy.Field()
+    parent_id = scrapy.Field()
     title = scrapy.Field()
+    digest = scrapy.Field()
     source = scrapy.Field()
-    datetime = scrapy.Field()
-    html = scrapy.Field()
+    ptime = scrapy.Field()
+    mtime = scrapy.Field()
+    content = scrapy.Field()
     comments_url = scrapy.Field()
     comments_number = scrapy.Field()
+    votecount = scrapy.Field()
+    replycount = scrapy.Field()
 
-
-class WangyiCommentsItem(scrapy.Item):
+class WangyiComment(scrapy.Item):
     flag = scrapy.Field()
     docid = scrapy.Field()
     username = scrapy.Field()
