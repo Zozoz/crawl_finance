@@ -41,7 +41,7 @@ class WangyiSpider(Spider):
                 yield item
                 # 头条， 娱乐，体育，财经
                 if it['tid'] in ['T1348647909107', 'T1348648517839', 'T1348649079062', 'T1348648756099']:
-                    url = self.base_url + it['tid'] + '/0-300.html'
+                    url = self.base_url + it['tid'] + '/0-500.html'
                     yield Request(url=url, callback=self.parse)
 
         elif len(url) > 5 and url[5] == 'list': # json api of article
@@ -49,7 +49,7 @@ class WangyiSpider(Spider):
             body = response.body
             body = json.loads(body)[parent_id]
             for it in body:
-                if 'url' in it:
+                if 'url' in it and it['lmodify'].startswith(self.date):
                     item = WangyiArticle()
                     item['flag'] = 'article'
                     item['url'] = it['url']
@@ -67,8 +67,7 @@ class WangyiSpider(Spider):
                     url = it['url'].split('.')
                     url[-2] += '_0'
                     url = '.'.join(url)
-                    if item['mtime'].startswith(self.date):
-                        yield Request(url=url, callback=self.parse)
+                    yield Request(url=url, callback=self.parse)
 
         elif url[2].startswith('3g'): # article detail
             item = WangyiArticle()
