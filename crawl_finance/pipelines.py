@@ -1,10 +1,57 @@
 # -*- coding: utf-8 -*-
 
 
+import sqlite3
+
 from scrapy import log
 from scrapy.exceptions import DropItem
 from pymongo import MongoClient
 from twisted.enterprise import adbapi
+
+
+class MusicSqlitePipeline(object):
+
+    def __init__(self, conn, cur):
+        self.conn = conn
+        self.cur = cur
+        self.cur.execute("""
+                create table if not exists wangyimusic(
+                sm_id varchar(50) primary key,
+                user_name varchar(50),
+                user_id varchar(50),
+                cat varchar(50),
+                title varchar(50),
+                ctime varchar(50),
+                tags varchar(100),
+                pnum int,
+                colnum int,
+                shnum int,
+                comnum int
+                );"""
+        )
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        settings = crawler.settings
+        db = settings.get('SQLITE_DB', 'wangyi_music.db')
+        conn = sqlite3.connect(db)
+        cur = conn.cursor()
+        return cls(conn, cur)
+
+    def process_item(self, item, spider):
+        sql = 'select 1 from wangyimusic where sm_id=?'
+        self.cur.execute(sql, (item['sm_id'],))
+        if not self.cur.fetchone():
+            self.cur.execute("""insert into wangyimusic (sm_id, user_name, user_id, cat, title,
+                    ctime, tags, pnum, colnum, shnum, comnum)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    item['sm_id'], item['user_name'], item['user_id'], item['cat'], item['title'],
+                    item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum']
+                )
+            )
+            self.conn.commit()
+        return item
 
 
 class Write2FilePipeline(object):
@@ -126,10 +173,10 @@ class MysqlPipeline(object):
 
     def _do_execute(self, conn, item, spider):
         if item['flag'] == 'article':
-            if conn.execute("select 1 from WangyiArticle where docid=%s", (item['docid'],)):
+            if conn.execute("select 1 from wangyi_WangyiArticle where docid=%s", (item['docid'],)):
                 if 'url' in item:
                     conn.execute(
-                            """update WangyiArticle set url=%s, url_3w=%s, title=%s, digest=%s, source=%s, parent_id=%s, ptime=%s, mtime=%s, votecount=%s, replycount=%s)
+                            """update wangyi_WangyiArticle set url=%s, url_3w=%s, title=%s, digest=%s, source=%s, parent_id=%s, ptime=%s, mtime=%s, votecount=%s, replycount=%s
                             where docid=%s""",
                             (
                                 item['url'], item['url_3w'], item['title'], item['digest'], item['source'], item['parent_id'],
@@ -138,7 +185,7 @@ class MysqlPipeline(object):
                     )
                 else:
                     conn.execute("""
-                        update WangyiArticle set content=%s, comments_url=%s, comments_number=%s
+                        update wangyi_WangyiArticle set content=%s, comments_url=%s, comments_number=%s
                         where docid=%s
                         """,
                         (
@@ -148,7 +195,7 @@ class MysqlPipeline(object):
             else:
                 if 'url' in item:
                     conn.execute(
-                            """insert into WangyiArticle (docid, url, url_3w, title, digest, source, parent_id, ptime, mtime, votecount, replycount)
+                            """insert into wangyi_WangyiArticle (docid, url, url_3w, title, digest, source, parent_id, ptime, mtime, votecount, replycount)
                             values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                             (
                                 item['docid'], item['url'], item['url_3w'], item['title'], item['digest'], item['source'], item['parent_id'],

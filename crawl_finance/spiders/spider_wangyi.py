@@ -39,8 +39,8 @@ class WangyiSpider(Spider):
                 item['subnum'] = it['subnum']
                 item['topicid'] = it['topicid']
                 yield item
-                # 头条， 娱乐，体育，财经
-                if it['tid'] in ['T1348647909107', 'T1348648517839', 'T1348649079062', 'T1348648756099']:
+                # 头条， 娱乐，体育，财经，社会，军事， 科技
+                if it['tid'] in ['T1348647909107', 'T1348648517839', 'T1348649079062', 'T1348648756099', 'T1348648037603', 'T1348648141035', 'T1348649580692']:
                     url = self.base_url + it['tid'] + '/0-500.html'
                     yield Request(url=url, callback=self.parse)
 

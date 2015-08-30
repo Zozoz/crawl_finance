@@ -42,3 +42,21 @@ class WangyiComment(scrapy.Item):
     oppose = scrapy.Field()
 
 
+class WangyiMusic(scrapy.Item):
+    sm_id = scrapy.Field()
+    cat = scrapy.Field()
+    title = scrapy.Field()
+    user_id = scrapy.Field()
+    user_name = scrapy.Field()
+    pnum = scrapy.Field()
+    colnum = scrapy.Field()
+    comnum = scrapy.Field()
+    shnum = scrapy.Field()
+    tags = scrapy.Field()
+    ctime = scrapy.Field()
+
+
+
+
+
+
