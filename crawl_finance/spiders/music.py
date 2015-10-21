@@ -56,7 +56,7 @@ class MusicSpider(Spider):
             names = response.xpath("//dd/a[contains(@class, 's-fc1')]/@data-cat").extract()
             for cat, name in zip(cats, names):
                 urls = self.base_url + cat + '&order=hot'
-                for i in xrange(20):
+                for i in xrange(50):
                     url = urls + '&limit=35&offset=' + str(35 * i)
                     yield Request(url=url, callback=self.parse)
 
