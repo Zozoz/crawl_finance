@@ -56,6 +56,31 @@ class WangyiMusic(scrapy.Item):
     ctime = scrapy.Field()
 
 
+class TencentArticle(scrapy.Item):
+    flag = scrapy.Field()
+    docid = scrapy.Field()
+    parent_name = scrapy.Field()
+    url = scrapy.Field()
+    title = scrapy.Field()
+    digest = scrapy.Field()
+    source = scrapy.Field()
+    time = scrapy.Field()
+    content = scrapy.Field()
+    comments_id = scrapy.Field()
+    comments_url = scrapy.Field()
+    comments_number = scrapy.Field()
+
+
+class TencentComment(scrapy.Item):
+    flag = scrapy.Field()
+    docid = scrapy.Field()
+    comments_id = scrapy.Field()
+    username = scrapy.Field()
+    comment = scrapy.Field()
+    datetime = scrapy.Field()
+    sex = scrapy.Field()
+    reply_id = scrapy.Field()
+    agree_count = scrapy.Field()
 
 
 

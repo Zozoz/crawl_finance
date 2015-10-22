@@ -19,7 +19,8 @@ COOKIES_ENABLED = False
 ITEM_PIPELINES = {
         # 'crawl_finance.pipelines.MusicSqlitePipeline': 500,
         # 'crawl_finance.pipelines.Write2FilePipeline': 500,
-        'crawl_finance.pipelines.MysqlPipeline': 600,
+        # 'crawl_finance.pipelines.MysqlPipeline': 600,
+        'crawl_finance.pipelines.TencentMysqlPipeline': 600,
         # 'crawl_finance.pipelines.MongodbPipeline': 700,
         }
 

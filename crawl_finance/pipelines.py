@@ -107,6 +107,105 @@ class MongodbPipeline(object):
         return item
 
 
+class TencentMysqlPipeline(object):
+
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
+        self.dbpool.runQuery("""create table if not exists `wangyi`.`TencentArticle`(
+                docid varchar(50) not null,
+                primary key(docid),
+                url varchar(200),
+                title varchar(200),
+                digest varchar(200),
+                source varchar(50),
+                time datetime,
+                comments_url varchar(200),
+                comments_id varchar(50),
+                comments_number int,
+                parent_name varchar(200),
+                content text
+                )charset='utf8'""")
+        self.dbpool.runQuery("""create table if not exists `wangyi`.`TencentComment`(
+                id int not null auto_increment,
+                primary key(id),
+                docid varchar(50) not null,
+                comments_id varchar(50),
+                sex char(10),
+                username varchar(50),
+                reply_id varchar(50),
+                agree_count int,
+                datetime varchar(100),
+                comment text
+                )charset='utf8'""")
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        settings = crawler.settings
+        kw = dict(
+            host=settings.get('MYSQL_HOST',' localhost'),
+            port=settings.get('MYSQL_PORT', 3306),
+            user=settings.get('MYSQL_USER', 'root'),
+            db=settings.get('MYSQL_DB', 'wangyi'),
+            passwd=settings.get('MYSQL_PASSWD', ''),
+            charset='utf8',
+            use_unicode=True,
+        )
+        dbpool = adbapi.ConnectionPool('MySQLdb', **kw)
+        return cls(dbpool)
+
+    def process_item(self, item, spider):
+        d = self.dbpool.runInteraction(self._do_execute, item, spider)
+        d.addErrback(self._handle_error, item, spider)
+        d.addBoth(lambda _: item)
+        return d
+
+    def _do_execute(self, conn, item, spider):
+        if item['flag'] == 'article':
+            if conn.execute("select 1 from TencentArticle where docid=%s", (item['docid'],)):
+                if not item['content']:
+                    conn.execute(
+                        """update TencentArticle set url=%s, title=%s, digest=%s, source=%s, parent_name=%s, time=%s,
+                        comments_id=%s, comments_url=%s, comments_number=%s  where docid=%s""",
+                        (
+                            item['url'], item['title'], item['digest'], item['source'], item['parent_name'],
+                            item['time'], item['comments_id'], item['comments_url'],
+                            item['comments_number'], item['docid']
+                        )
+                    )
+                else:
+                    conn.execute(
+                        """update TencentArticle set content=%s where docid=%s""",
+                        (item['content'], item['docid'])
+                    )
+            else:
+                conn.execute(
+                        """insert into TencentArticle (docid, comments_number)
+                        values (%s, %s)""",
+                        (
+                            item['docid'], item['comments_number']
+                        )
+                )
+
+        elif item['flag'] == 'comment':
+            if conn.execute("select 1 from TencentComment where reply_id=%s", (item['reply_id'], )):
+                conn.execute(
+                        """update TencentComment set agree_count=%s where reply_id=%s""",
+                        (item['agree_count'], item['reply_id'])
+                )
+            else:
+                conn.execute(
+                        """insert into TencentComment (docid, comments_id, datetime, comment, username, sex,
+                        reply_id, agree_count) values (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                        (
+                            item['docid'], item['comments_id'], item['datetime'], item['comment'],
+                            item['username'], item['sex'], item['reply_id'], item['agree_count']
+                        )
+                )
+
+    def _handle_error(self, failure, item, spider):
+        log.err(failure)
+
+
 class MysqlPipeline(object):
 
     def __init__(self, dbpool):
