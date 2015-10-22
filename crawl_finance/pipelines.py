@@ -108,6 +108,10 @@ class MongodbPipeline(object):
 
 
 class TencentMysqlPipeline(object):
+    """
+    twisted.enterprise.adbapi: Twisted RDBMS support.
+    https://twistedmatrix.com/documents/14.0.0/core/howto/rdbms.html
+    """
 
     def __init__(self, dbpool):
         self.dbpool = dbpool
@@ -160,18 +164,27 @@ class TencentMysqlPipeline(object):
         return d
 
     def _do_execute(self, conn, item, spider):
+        """
+        conn.runQuery() <--> cursor.execute(), return cursor.fetchall();
+        conn.execute(), then result = conn.fetchall()
+        """
         if item['flag'] == 'article':
             if conn.execute("select 1 from TencentArticle where docid=%s", (item['docid'],)):
                 if not item['content']:
-                    conn.execute(
-                        """update TencentArticle set url=%s, title=%s, digest=%s, source=%s, parent_name=%s, time=%s,
-                        comments_id=%s, comments_url=%s, comments_number=%s  where docid=%s""",
-                        (
-                            item['url'], item['title'], item['digest'], item['source'], item['parent_name'],
-                            item['time'], item['comments_id'], item['comments_url'],
-                            item['comments_number'], item['docid']
+                    try:
+                        conn.execute(
+                            """update TencentArticle set url=%s, title=%s, digest=%s, source=%s, parent_name=%s, time=%s,
+                            comments_id=%s, comments_url=%s  where docid=%s""",
+                            (
+                                item['url'], item['title'], item['digest'], item['source'], item['parent_name'],
+                                item['time'], item['comments_id'], item['comments_url'], item['docid']
+                            )
                         )
-                    )
+                    except:
+                        conn.execute(
+                            """update TencentArticle set comments_number=%s where docid=%s""",
+                            (item['comments_number'], item['docid'])
+                        )
                 else:
                     conn.execute(
                         """update TencentArticle set content=%s where docid=%s""",
@@ -336,6 +349,5 @@ class MysqlPipeline(object):
 
     def _handle_error(self, failure, item, spider):
         log.err(failure)
-
 
 

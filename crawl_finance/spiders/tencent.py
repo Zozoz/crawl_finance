@@ -16,10 +16,10 @@ class TencentSpider(Spider):
             'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_js', # 江苏
             'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_mil', # 军事
             'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_ssh', # 社会
-            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=ent', # 娱乐
-            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=sports', # 体育
-            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=istock', # 股票
-            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=finance' # 财经
+            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_ent', # 娱乐
+            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_sports', # 体育
+            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_istock', # 股票
+            'http://r.inews.qq.com/getQQNewsIndexAndItems?uid=9224f71108b3a1f5&chlid=news_news_finance' # 财经
     )
 
     def __init__(self, date):
@@ -71,6 +71,7 @@ class TencentSpider(Spider):
                 tmp = news['url'].split('/')
                 tmp[3] = 'comment'
                 item['comments_url'] = '/'.join(tmp) + '#' + news['commentid']
+                item['comments_number'] = 0
                 yield item
                 url = 'http://view.inews.qq.com/a/' + item['docid']
                 yield Request(url=url, callback=self.parse)
@@ -110,10 +111,5 @@ class TencentSpider(Spider):
             except:
                 item['content'] = 'no content'
             yield item
-
-
-
-
-
 
 
