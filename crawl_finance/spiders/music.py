@@ -12,14 +12,14 @@ class MusicSpider(Spider):
     name = "music"
     allowed_domains = ["music.163.com"]
     start_urls = (
-            'http://music.163.com/discover/playlist',
+            'http://music.163.com/discover/playlist/?order=hot',
     )
     base_url = 'http://music.163.com'
 
     def parse(self, response):
         url = response.url.split('/')
-        if url[-1].startswith('?cat'):
-            urls = response.xpath("//ul/li/p[contains(@class, 'dec')]/a/@href").extract()
+        if 'limit' in url[-1]:
+            urls = response.xpath("//ul[contains(@class, 'm-cvrlst')]/li/div/a[contains(@class, 'msk')]/@href").extract()
             for url in urls:
                 url = self.base_url + url
                 yield Request(url=url, callback=self.parse)
@@ -31,7 +31,10 @@ class MusicSpider(Spider):
             ctime = response.xpath("//div[contains(@class, 'user ')]/span[contains(@class, 'time ')]/text()").extract()[0]
             colnum = response.xpath("//div[contains(@class, 'btns f-cb')]/a[contains(@class, 'u-btni-fav')]/@data-count").extract()[0]
             shnum = response.xpath("//div[contains(@class, 'btns f-cb')]/a[contains(@class, 'u-btni-share')]/@data-count").extract()[0]
-            comnum = response.xpath("//div[contains(@class, 'btns f-cb')]/a[contains(@class, 'u-btni-cmmt')]/i/span/text()").extract()[0]
+            try:
+                comnum = response.xpath("//div[contains(@class, 'btns f-cb')]/a[contains(@class, 'u-btni-cmmt')]/i/span/text()").extract()[0]
+            except:
+                comnum = 0
             tags = response.xpath("//div[contains(@class, 'tags f-cb')]/a/i/text()").extract()
             tag = ' '
             for item in tags:
@@ -55,8 +58,8 @@ class MusicSpider(Spider):
             cats = response.xpath("//dd/a[contains(@class, 's-fc1')]/@href").extract()
             names = response.xpath("//dd/a[contains(@class, 's-fc1')]/@data-cat").extract()
             for cat, name in zip(cats, names):
-                urls = self.base_url + cat + '&order=hot'
-                for i in xrange(50):
+                urls = self.base_url + cat
+                for i in xrange(44):
                     url = urls + '&limit=35&offset=' + str(35 * i)
                     yield Request(url=url, callback=self.parse)
 

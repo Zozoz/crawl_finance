@@ -2,20 +2,20 @@
 
 
 import sqlite3
-
+import MySQLdb
 from scrapy import log
 from scrapy.exceptions import DropItem
 from pymongo import MongoClient
 from twisted.enterprise import adbapi
 
 
-class MusicSqlitePipeline(object):
+class MusicMysqlPipeline(object):
 
     def __init__(self, conn, cur):
         self.conn = conn
         self.cur = cur
         self.cur.execute("""
-                create table if not exists wangyimusic(
+                create table if not exists music_wangyimusic(
                 sm_id varchar(50) primary key,
                 user_name varchar(50),
                 user_id varchar(50),
@@ -36,22 +36,43 @@ class MusicSqlitePipeline(object):
         db = settings.get('SQLITE_DB', 'wangyi_music.db')
         conn = sqlite3.connect(db)
         cur = conn.cursor()
+        host = settings.get('MYSQL_HOST', 'localhost')
+        port = settings.get('MYSQL_PORT', 3306)
+        user = settings.get('MYSQL_USER', 'root')
+        passwd = settings.get('MYSQL_PASSWD', 'qwert123456')
+        db = settings.get('MYSQL_DB', 'wangyi')
+        conn = MySQLdb.connect(host=host, port=port, user=user, passwd=passwd, db=db)
+        cur = conn.cursor()
         return cls(conn, cur)
 
     def process_item(self, item, spider):
-        sql = 'select 1 from wangyimusic where sm_id=?'
-        self.cur.execute(sql, (item['sm_id'],))
+        sql0 = 'select 1 from music_wangyimusic where sm_id=%s'
+        sql1 = 'update music_wangyimusic set user_name=%s, user_id=%s, cat=%s, title=%s, ctime=%s, tags=%s, pnum=%s, colnum=%s, shnum=%s, comnum=%s where sm_id=%s'
+        sql2 = 'insert into music_wangyimusic (sm_id, user_name, user_id, cat, title, ctime, tags, pnum, colnum, shnum, comnum) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+        params1 = (item['user_name'],  item['user_id'], item['cat'], item['title'], item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum'], item['sm_id'])
+        params2 = (item['sm_id'], item['user_name'],  item['user_id'], item['cat'], item['title'], item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum'])
+
+        self.cur.execute(sql0, (item['sm_id'], ))
         if not self.cur.fetchone():
-            self.cur.execute("""insert into wangyimusic (sm_id, user_name, user_id, cat, title,
-                    ctime, tags, pnum, colnum, shnum, comnum)
-                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    item['sm_id'], item['user_name'], item['user_id'], item['cat'], item['title'],
-                    item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum']
-                )
-            )
-            self.conn.commit()
+            self.cur.execute(sql2, params2)
+        else:
+            self.cur.execute(sql1, params1)
+        self.conn.commit()
         return item
+
+        # sql = 'select 1 from wangyimusic where sm_id=?'
+        # self.cur.execute(sql, (item['sm_id'],))
+        # if not self.cur.fetchone():
+        #     self.cur.execute("""insert into wangyimusic (sm_id, user_name, user_id, cat, title,
+        #             ctime, tags, pnum, colnum, shnum, comnum)
+        #             values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        #         (
+        #             item['sm_id'], item['user_name'], item['user_id'], item['cat'], item['title'],
+        #             item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum']
+        #         )
+        #     )
+        #     self.conn.commit()
+        # return item
 
 
 class Write2FilePipeline(object):
@@ -200,12 +221,7 @@ class TencentMysqlPipeline(object):
                 )
 
         elif item['flag'] == 'comment':
-            if conn.execute("select 1 from TencentComment where reply_id=%s", (item['reply_id'], )):
-                conn.execute(
-                        """update TencentComment set agree_count=%s where reply_id=%s""",
-                        (item['agree_count'], item['reply_id'])
-                )
-            else:
+            try:
                 conn.execute(
                         """insert into TencentComment (docid, comments_id, datetime, comment, username, sex,
                         reply_id, agree_count) values (%s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -213,6 +229,11 @@ class TencentMysqlPipeline(object):
                             item['docid'], item['comments_id'], item['datetime'], item['comment'],
                             item['username'], item['sex'], item['reply_id'], item['agree_count']
                         )
+                )
+            except:
+                conn.execute(
+                        """update TencentComment set agree_count=%s where reply_id=%s""",
+                        (item['agree_count'], item['reply_id'])
                 )
 
     def _handle_error(self, failure, item, spider):

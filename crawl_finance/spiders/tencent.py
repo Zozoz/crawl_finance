@@ -82,7 +82,7 @@ class TencentSpider(Spider):
         elif url[3].startswith('getQQNewsComment'):
             body = response.body
             comments = json.loads(body)['comments']['new']
-            if comments:
+            if len(comments) == 20:
                 url = response.url.split('=')
                 url[-1] = str(int(url[-1]) + 1)
                 url = '='.join(url)
