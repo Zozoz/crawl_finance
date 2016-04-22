@@ -27,15 +27,12 @@ class MusicMysqlPipeline(object):
                 colnum int,
                 shnum int,
                 comnum int
-                );"""
+                )charset='utf8'"""
         )
 
     @classmethod
     def from_crawler(cls, crawler):
         settings = crawler.settings
-        db = settings.get('SQLITE_DB', 'wangyi_music.db')
-        conn = sqlite3.connect(db)
-        cur = conn.cursor()
         host = settings.get('MYSQL_HOST', 'localhost')
         port = settings.get('MYSQL_PORT', 3306)
         user = settings.get('MYSQL_USER', 'root')
@@ -49,8 +46,8 @@ class MusicMysqlPipeline(object):
         sql0 = 'select 1 from music_wangyimusic where sm_id=%s'
         sql1 = 'update music_wangyimusic set user_name=%s, user_id=%s, cat=%s, title=%s, ctime=%s, tags=%s, pnum=%s, colnum=%s, shnum=%s, comnum=%s where sm_id=%s'
         sql2 = 'insert into music_wangyimusic (sm_id, user_name, user_id, cat, title, ctime, tags, pnum, colnum, shnum, comnum) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-        params1 = (item['user_name'],  item['user_id'], item['cat'], item['title'], item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum'], item['sm_id'])
-        params2 = (item['sm_id'], item['user_name'],  item['user_id'], item['cat'], item['title'], item['ctime'], item['tags'], item['pnum'], item['colnum'], item['shnum'], item['comnum'])
+        params1 = (item['user_name'].encode('utf-8'), item['user_id'], item['cat'].encode('utf-8'), item['title'].encode('utf-8'), item['ctime'].encode('utf-8'), item['tags'].encode('utf-8'), item['pnum'], item['colnum'], item['shnum'], item['comnum'], item['sm_id'])
+        params2 = (item['sm_id'], item['user_name'].encode('utf-8'), item['user_id'], item['cat'].encode('utf-8'), item['title'].encode('utf-8'), item['ctime'].encode('utf-8'), item['tags'].encode('utf-8'), item['pnum'], item['colnum'], item['shnum'], item['comnum'])
 
         self.cur.execute(sql0, (item['sm_id'], ))
         if not self.cur.fetchone():
